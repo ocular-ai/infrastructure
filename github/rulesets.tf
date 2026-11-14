@@ -1,7 +1,4 @@
 locals {
-  # The organization-admin role, in GitHub's ruleset actor IDs.
-  organization_admin = 1
-
   # GitHub user IDs, which outlive a username change.
   pstefanou12 = 35354411
 }
@@ -23,7 +20,7 @@ resource "github_repository_ruleset" "delphi_ai_default_branch" {
 
   # Admins may merge a PR without its review, but never push directly.
   bypass_actors {
-    actor_id    = local.organization_admin
+    # The role has no actor ID; GitHub ignores one if set.
     actor_type  = "OrganizationAdmin"
     bypass_mode = "pull_request"
   }
@@ -76,7 +73,7 @@ resource "github_repository_ruleset" "infrastructure_default_branch" {
   }
 
   bypass_actors {
-    actor_id    = local.organization_admin
+    # The role has no actor ID; GitHub ignores one if set.
     actor_type  = "OrganizationAdmin"
     bypass_mode = "pull_request"
   }
