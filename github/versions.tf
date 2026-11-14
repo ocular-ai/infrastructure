@@ -1,8 +1,8 @@
 terraform {
-  required_version = ">= 1.6"
+  required_version = "1.17.2"
 
   cloud {
-    organization = "ocular-ai"
+    organization = "ocular_ai"
 
     workspaces {
       name = "github"

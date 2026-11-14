@@ -59,9 +59,9 @@ repository's ruleset, which that apply creates.
    Generate a private key, then install the App on the organization for
    all repositories. Its ID is on the App's page, and the installation ID
    is the number at the end of the installation's URL.
-2. **HCP Terraform.** In the `ocular-ai` organization, create the `github`
-   workspace with the *CLI-driven workflow* and remote execution. Under
-   its *Variables*, add three Terraform variables:
+2. **HCP Terraform.** In the `ocular_ai` HCP Terraform organization,
+   create the `github` workspace with the *CLI-driven workflow* and remote
+   execution. Under its *Variables*, add three Terraform variables:
    - `github_app_id`
    - `github_app_installation_id`
    - `github_app_pem_file`: the key's contents, marked sensitive.

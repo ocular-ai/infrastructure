@@ -38,7 +38,7 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.13.4
+          terraform_version: 1.17.2
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
           # The comment step reads the plan from a file, not the wrapper's
           # outputs, which truncate long plans.
