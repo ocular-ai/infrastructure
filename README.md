@@ -23,7 +23,7 @@ Inside a root:
 |------|-------|
 | `versions.tf` | The HCP Terraform workspace and the provider versions. |
 | `providers.tf`, `variables.tf` | The providers and the credentials they take. |
-| `imports.tf` | Imports of what existed before Terraform managed it; delete once applied. |
+| `imports.tf` | Imports of what existed before Terraform managed it; delete once applied. Absent when nothing is pending. |
 
 ## How changes land
 
