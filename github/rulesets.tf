@@ -1,6 +1,9 @@
 locals {
   # The organization-admin role, in GitHub's ruleset actor IDs.
   organization_admin = 1
+
+  # GitHub user IDs, which outlive a username change.
+  pstefanou12 = 35354411
 }
 
 # PRs run the quick tier; the merge queue runs the sharded not-slow suite on
@@ -87,17 +90,12 @@ resource "github_repository_ruleset" "infrastructure_default_branch" {
       require_last_push_approval      = true
     }
 
-    # Strict, so a plan is never applied against a stale base.
+    # Strict, so the plan a PR shows was made against the current main.
     required_status_checks {
       strict_required_status_checks_policy = true
 
       required_check {
-        context = "validate"
-      }
-
-      # The speculative plan Terraform Cloud's VCS integration posts.
-      required_check {
-        context = "Terraform Cloud/ocular-ai/infrastructure"
+        context = "plan"
       }
     }
   }

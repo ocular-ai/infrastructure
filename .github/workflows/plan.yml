@@ -1,0 +1,101 @@
+name: Plan
+
+# Plans every Terraform root on each PR and posts the plan as a comment.
+# Runs execute remotely in HCP Terraform, which holds each workspace's
+# provider credentials; this job holds only the API token.
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  root:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # One entry per Terraform root, each its own HCP Terraform workspace.
+        directory:
+          - github
+    defaults:
+      run:
+        # Named explicitly, so each step runs with pipefail.
+        shell: bash
+        working-directory: ${{ matrix.directory }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.4
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          # The comment step reads the plan from a file, not the wrapper's
+          # outputs, which truncate long plans.
+          terraform_wrapper: false
+
+      - name: Check formatting
+        run: terraform fmt -check -recursive
+
+      - name: Initialize
+        run: terraform init -input=false
+
+      - name: Validate
+        run: terraform validate -no-color
+
+      # A speculative plan: HCP Terraform never applies it.
+      - name: Plan
+        run: terraform plan -input=false -no-color 2>&1 | tee "$RUNNER_TEMP/plan.txt"
+
+      - name: Comment the plan
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          DIRECTORY: ${{ matrix.directory }}
+        with:
+          script: |
+            const fs = require("fs");
+            const path = `${process.env.RUNNER_TEMP}/plan.txt`;
+            const plan = fs.existsSync(path) ? fs.readFileSync(path, "utf8") : "No plan.";
+            // GitHub caps a comment at 65536 characters.
+            const tail = plan.length > 60000 ? plan.slice(-60000) : plan;
+            const marker = `<!-- plan:${process.env.DIRECTORY} -->`;
+            const body = [
+              marker,
+              `### \`${process.env.DIRECTORY}\` plan`,
+              "```",
+              tail,
+              "```",
+            ].join("\n");
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number,
+            });
+            const previous = comments.find((c) => c.body.startsWith(marker));
+            if (previous) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: previous.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+
+  # The one check the ruleset requires, whatever the matrix holds.
+  plan:
+    if: always()
+    needs: root
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every root's plan
+        run: test "${{ needs.root.result }}" = "success"

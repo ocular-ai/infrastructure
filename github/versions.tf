@@ -5,7 +5,7 @@ terraform {
     organization = "ocular-ai"
 
     workspaces {
-      name = "infrastructure"
+      name = "github"
     }
   }
 

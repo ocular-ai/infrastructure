@@ -1,0 +1,51 @@
+name: Apply
+
+# Applies every Terraform root once a merge to main is approved in the
+# production environment.
+on:
+  push:
+    branches:
+      - main
+
+# Applies queue rather than cancel: a cancelled apply can leave a workspace
+# locked mid-run.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      # One apply at a time, and a failure cancels the roots after it.
+      fail-fast: true
+      max-parallel: 1
+      matrix:
+        directory:
+          - github
+    defaults:
+      run:
+        # Named explicitly, so each step runs with pipefail.
+        shell: bash
+        working-directory: ${{ matrix.directory }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.4
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_wrapper: false
+
+      - name: Initialize
+        run: terraform init -input=false
+
+      - name: Apply
+        run: terraform apply -input=false -no-color -auto-approve

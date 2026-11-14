@@ -63,3 +63,18 @@ resource "github_repository_pages" "website" {
     path   = "/"
   }
 }
+
+# The apply workflow's gate: it runs only from main, after a reviewer approves.
+resource "github_repository_environment" "infrastructure_production" {
+  repository  = github_repository.infrastructure.name
+  environment = "production"
+
+  reviewers {
+    users = [local.pstefanou12]
+  }
+
+  deployment_branch_policy {
+    protected_branches     = true
+    custom_branch_policies = false
+  }
+}
