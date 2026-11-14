@@ -20,3 +20,9 @@ import {
   to = github_repository_pages.website
   id = "pstefanou12.github.io"
 }
+
+# GitHub created it, unprotected, when the first push's Apply job named it.
+import {
+  to = github_repository_environment.infrastructure_production
+  id = "infrastructure:production"
+}
